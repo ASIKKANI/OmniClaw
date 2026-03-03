@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniClaw</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #050508;
+            color: #e8e8ef;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+        }
+
+        .shell {
+            position: relative;
+            z-index: 1;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 3vh 1.5rem 2vh;
+        }
+
+        .brand {
+            text-align: center;
+            margin-bottom: 2vh;
+        }
+
+        .brand h1 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        .brand b {
+            color: #7c6cf0;
+        }
+
+        .brand p {
+            font-size: 0.7rem;
+            color: #555568;
+            margin-top: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .input-area {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            max-width: 520px;
+            gap: 8px;
+            margin-bottom: 1.5vh;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 11px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: #0c0c14;
+            color: #e8e8ef;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.88rem;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .input-area input::placeholder {
+            color: #555568;
+        }
+
+        .input-area input:focus {
+            border-color: #7c6cf0;
+        }
+
+        .send-btn {
+            padding: 11px 20px;
+            border-radius: 12px;
+            border: none;
+            background: #7c6cf0;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover {
+            background: #6c5ce7;
+        }
+
+        .mic-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1.5px solid rgba(255, 255, 255, 0.06);
+            background: #0c0c14;
+            color: #555568;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+            flex-shrink: 0;
+        }
+
+        .mic-btn:hover {
+            border-color: #7c6cf0;
+            color: #7c6cf0;
+        }
+
+        .mic-btn.on {
+            border-color: #22d3ee;
+            color: #22d3ee;
+            background: rgba(34, 211, 238, 0.08);
+            animation: pulse 1.2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.15);
+            }
+
+            50% {
+                box-shadow: 0 0 0 12px rgba(34, 211, 238, 0);
+            }
+        }
+
+        .stop-all {
+            height: 36px;
+            border-radius: 10px;
+            border: 1.5px solid rgba(255, 255, 255, 0.06);
+            background: #0c0c14;
+            color: #555568;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: 0.3s;
+            flex-shrink: 0;
+            padding: 0 12px;
+        }
+
+        .stop-all.show {
+            display: flex;
+        }
+
+        .stop-all:hover {
+            border-color: #f87171;
+            color: #f87171;
+        }
+
+        .st {
+            text-align: center;
+            font-size: 0.82rem;
+            min-height: 1.2rem;
+            max-width: 500px;
+            margin-bottom: 1vh;
+            color: #555568;
+        }
+
+        .st-lit {
+            color: #e8e8ef;
+        }
+
+        .st-err {
+            color: #f87171;
+        }
+
+        .queue {
+            width: 100%;
+            max-width: 540px;
+            display: none;
+            margin-bottom: 1vh;
+        }
+
+        .queue.show {
+            display: block;
+        }
+
+        .queue-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 0;
+            font-size: 0.78rem;
+        }
+
+        .queue-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            background: #333;
+            transition: 0.3s;
+        }
+
+        .queue-dot.active {
+            background: #7c6cf0;
+            box-shadow: 0 0 8px rgba(124, 108, 240, 0.4);
+        }
+
+        .queue-dot.done {
+            background: #34d399;
+        }
+
+        .queue-dot.skipped {
+            background: #fbbf24;
+        }
+
+        .queue-label {
+            color: #555568;
+            transition: 0.3s;
+            flex: 1;
+        }
+
+        .queue-label.active {
+            color: #e8e8ef;
+            font-weight: 500;
+        }
+
+        .queue-label.done {
+            color: #34d399;
+        }
+
+        .queue-label.skipped {
+            color: #fbbf24;
+        }
+
+        .queue-stop {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: transparent;
+            color: #555568;
+            font-size: 0.6rem;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+            flex-shrink: 0;
+        }
+
+        .queue-stop.show {
+            display: flex;
+        }
+
+        .queue-stop:hover {
+            border-color: #f87171;
+            color: #f87171;
+            background: rgba(248, 113, 113, 0.06);
+        }
+
+        .logs {
+            width: 100%;
+            max-width: 540px;
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            background: #0c0c14;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(6px);
+            transition: 0.4s;
+        }
+
+        .logs.show {
+            opacity: 1;
+            transform: none;
+        }
+
+        .lbar {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 10px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            font-size: 0.7rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #555568;
+        }
+
+        .lbar .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #34d399;
+            animation: blink 1.2s infinite;
+        }
+
+        .lbar.off .dot {
+            animation: none;
+            background: #555568;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.2;
+            }
+        }
+
+        .lbody {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 0;
+        }
+
+        .lbody::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        .lbody::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.07);
+            border-radius: 3px;
+        }
+
+        .lr {
+            display: flex;
+            gap: 8px;
+            padding: 4px 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.76rem;
+            line-height: 1.6;
+        }
+
+        .lr .i {
+            flex-shrink: 0;
+        }
+
+        .lr .m {
+            color: #555568;
+        }
+
+        .m-ok {
+            color: #34d399 !important;
+        }
+
+        .m-er {
+            color: #f87171 !important;
+        }
+
+        .m-wn {
+            color: #fbbf24 !important;
+        }
+
+        .m-hi {
+            color: #e8e8ef !important;
+        }
+
+        .m-res {
+            color: #a78bfa !important;
+        }
+
+        .m-ev {
+            color: #22d3ee !important;
+        }
+
+        .m-ev-bad {
+            color: #fb923c !important;
+        }
+
+        .lr-sep {
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            margin-top: 6px;
+            padding-top: 8px;
+        }
+
+        .ban {
+            width: 100%;
+            max-width: 540px;
+            margin-top: 1vh;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            text-align: center;
+            display: none;
+        }
+
+        .ban-ok {
+            display: block;
+            background: rgba(52, 211, 153, 0.08);
+            border: 1px solid rgba(52, 211, 153, 0.2);
+            color: #34d399;
+        }
+
+        .ban-er {
+            display: block;
+            background: rgba(248, 113, 113, 0.08);
+            border: 1px solid rgba(248, 113, 113, 0.2);
+            color: #f87171;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="c"></canvas>
+    <div class="shell">
+        <div class="brand">
+            <h1>OMNI<b>CLAW</b></h1>
+            <p>autonomous android agent</p>
+        </div>
+        <div class="input-area">
+            <button class="mic-btn" id="micBtn" type="button" onclick="toggleMic()">&#127908;</button>
+            <input id="inp" type="text" placeholder="e.g. call bharani and open youtube" autocomplete="off"
+                spellcheck="false">
+            <button class="send-btn" type="button" onclick="doSend()">Send</button>
+            <button class="stop-all" id="stopBtn" type="button" onclick="doStop()">Stop &#9209;</button>
+        </div>
+        <div class="st" id="st">Type a command or tap mic</div>
+        <div class="queue" id="queue"></div>
+        <div class="logs" id="logs">
+            <div class="lbar" id="bar">
+                <div class="dot"></div><span id="barTxt">Running</span>
+            </div>
+            <div class="lbody" id="lbody"></div>
+        </div>
+        <div class="ban" id="ban"></div>
+    </div>
+
+    <script>
+        /* ========== PARTICLES ========== */
+        var cv = document.getElementById('c');
+        var cctx = cv.getContext('2d');
+        var W = 0;
+        var H = 0;
+        var nrg = 0;
+        var tgtNrg = 0;
+
+        function resizeCanvas() {
+            W = cv.width = window.innerWidth;
+            H = cv.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        var particles = [];
+        for (var pi = 0; pi < 80; pi++) {
+            particles.push({
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                r: Math.random() * 1.4 + 0.4,
+                dx: (Math.random() - 0.5) * 0.22,
+                dy: (Math.random() - 0.5) * 0.22,
+                h: Math.random() > 0.5 ? 255 : 180
+            });
+        }
+
+        function drawParticles() {
+            cctx.clearRect(0, 0, W, H);
+            nrg += (tgtNrg - nrg) * 0.08;
+            var boost = 1 + nrg * 5;
+            for (var i = 0; i < particles.length; i++) {
+                var p = particles[i];
+                p.x += p.dx * boost + (Math.random() - 0.5) * nrg * 1.5;
+                p.y += p.dy * boost + (Math.random() - 0.5) * nrg * 1.5;
+                if (p.x < 0 || p.x > W) p.dx *= -1;
+                if (p.y < 0 || p.y > H) p.dy *= -1;
+                cctx.beginPath();
+                cctx.arc(p.x, p.y, p.r + nrg * 2, 0, 6.28);
+                cctx.fillStyle = 'hsla(' + p.h + ',60%,65%,' + (0.12 + nrg * 0.5) + ')';
+                cctx.fill();
+            }
+            requestAnimationFrame(drawParticles);
+        }
+        drawParticles();
+
+
+        /* ========== GLOBALS ========== */
+        var evtSrc = null;
+        var jobs = [];
+        var isQueue = false;
+        var currentJobIdx = -1;
+        var isListening = false;
+        var speechRec = null;
+        var micStream = null;
+        var micAudioCtx = null;
+        var micTranscript = '';
+
+        var SpeechAPI = null;
+        try {
+            SpeechAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+        } catch (ex) {
+            SpeechAPI = null;
+        }
+
+
+        /* ========== SEND ========== */
+        function doSend() {
+            var inputEl = document.getElementById('inp');
+            var goal = inputEl.value.trim();
+            if (goal === '') return;
+            inputEl.value = '';
+            startAgent(goal);
+        }
+
+        /* Enter key */
+        document.getElementById('inp').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                doSend();
+            }
+        });
+
+
+        /* ========== SKIP CURRENT JOB ========== */
+        function doSkip() {
+            fetch('/api/skip', { method: 'POST' });
+            addLog('\u23ED', 'Skipping current job...', 'wn');
+        }
+
+
+        /* ========== STOP ALL ========== */
+        function doStop() {
+            fetch('/api/stop', { method: 'POST' });
+            if (evtSrc) {
+                evtSrc.close();
+                evtSrc = null;
+            }
+            tgtNrg = 0;
+            addLog('\u23F9', 'Stopped all jobs', 'er');
+            finishRun();
+        }
+
+
+        /* ========== MIC (continuous until user stops) ========== */
+        function toggleMic() {
+            if (isListening) {
+                var cmd = micTranscript.trim();
+                stopListening();
+                if (cmd !== '') {
+                    startAgent(cmd);
+                }
+            } else {
+                startListening();
+            }
+        }
+
+        function startListening() {
+            if (!SpeechAPI) {
+                setStatus('Speech not supported. Use Chrome or type below.', 'err');
+                return;
+            }
+            if (!window.isSecureContext) {
+                setStatus('Mic requires HTTPS or http://localhost', 'err');
+                return;
+            }
+
+            micTranscript = '';
+
+            try {
+                speechRec = new SpeechAPI();
+            } catch (e) {
+                setStatus('Cannot init speech: ' + e.message, 'err');
+                return;
+            }
+
+            speechRec.continuous = true;
+            speechRec.interimResults = true;
+            speechRec.lang = 'en-US';
+            speechRec.maxAlternatives = 1;
+
+            speechRec.onstart = function () {
+                isListening = true;
+                document.getElementById('micBtn').classList.add('on');
+                setStatus('Listening... tap mic again to send', 'lit');
+
+                /* Audio energy for particles */
+                try {
+                    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+                        micStream = stream;
+                        micAudioCtx = new AudioContext();
+                        var analyser = micAudioCtx.createAnalyser();
+                        analyser.fftSize = 256;
+                        micAudioCtx.createMediaStreamSource(stream).connect(analyser);
+                        var buf = new Uint8Array(analyser.frequencyBinCount);
+                        function poll() {
+                            if (!isListening) return;
+                            analyser.getByteFrequencyData(buf);
+                            var sum = 0;
+                            for (var k = 0; k < buf.length; k++) sum += buf[k];
+                            tgtNrg = (sum / buf.length / 255) * 3;
+                            requestAnimationFrame(poll);
+                        }
+                        poll();
+                    }).catch(function () { });
+                } catch (e) { }
+            };
+
+            speechRec.onresult = function (event) {
+                var full = '';
+                for (var i = 0; i < event.results.length; i++) {
+                    full += event.results[i][0].transcript;
+                }
+                micTranscript = full;
+                if (full !== '') {
+                    setStatus(full, 'lit');
+                } else {
+                    setStatus('Listening...', 'lit');
+                }
+            };
+
+            speechRec.onerror = function (event) {
+                if (event.error === 'aborted') return;
+                if (event.error === 'no-speech') {
+                    /* Don't stop on silence, just keep listening */
+                    return;
+                }
+                var msg = 'Mic error: ' + event.error;
+                if (event.error === 'not-allowed') {
+                    msg = 'Mic blocked! Click lock icon in address bar > Allow mic';
+                }
+                setStatus(msg, 'err');
+                stopListening();
+            };
+
+            speechRec.onend = function () {
+                /* Browser auto-stops after silence — restart if user hasn't stopped */
+                if (isListening) {
+                    try { speechRec.start(); } catch (e) { }
+                }
+            };
+
+            try {
+                speechRec.start();
+            } catch (e) {
+                setStatus('Mic start failed: ' + e.message, 'err');
+            }
+        }
+
+        function stopListening() {
+            isListening = false;
+            document.getElementById('micBtn').classList.remove('on');
+            tgtNrg = 0;
+            try { if (speechRec) speechRec.stop(); } catch (e) { }
+            if (micStream) {
+                micStream.getTracks().forEach(function (t) { t.stop(); });
+                micStream = null;
+            }
+            if (micAudioCtx) {
+                micAudioCtx.close();
+                micAudioCtx = null;
+            }
+        }
+
+
+        /* ========== AGENT SSE ========== */
+        function startAgent(goal) {
+            resetUI();
+            setStatus('\uD83C\uDFAF ' + goal, 'lit');
+            document.getElementById('logs').classList.add('show');
+            document.getElementById('stopBtn').classList.add('show');
+            tgtNrg = 0.1;
+
+            var url = '/api/run?goal=' + encodeURIComponent(goal);
+            evtSrc = new EventSource(url);
+
+            evtSrc.onmessage = function (e) {
+                try {
+                    var ev = JSON.parse(e.data);
+                    handleEvent(ev);
+                } catch (err) {
+                    addLog('\u26A0\uFE0F', 'Parse error: ' + err.message, 'er');
+                }
+            };
+
+            evtSrc.onerror = function () {
+                if (evtSrc) {
+                    evtSrc.close();
+                    evtSrc = null;
+                }
+                tgtNrg = 0;
+                finishRun();
+            };
+        }
+
+
+        /* ========== EVENT HANDLER ========== */
+        function handleEvent(ev) {
+            var t = ev.type;
+
+            if (t === 'queue') {
+                buildQueue(ev.jobs);
+                isQueue = true;
+                addLog('\uD83D\uDCCB', ev.total + ' jobs queued', 'hi');
+            }
+            else if (t === 'job_start') {
+                currentJobIdx = ev.index;
+                setQueueActive(ev.index);
+                addLog('\uD83D\uDD35', 'Job ' + (ev.index + 1) + '/' + ev.total + ': ' + ev.goal, 'hi', true);
+            }
+            else if (t === 'job_done') {
+                setQueueDone(ev.index);
+            }
+            else if (t === 'all_done') {
+                addLog('\uD83C\uDFC1', 'All ' + ev.total + ' jobs complete', 'ok', true);
+                showBanner('\uD83C\uDFC1 All ' + ev.total + ' jobs done!', 'ok');
+                finishRun();
+            }
+            else if (t === 'start') {
+                addLog('\uD83C\uDFAF', ev.goal, 'hi');
+            }
+            else if (t === 'perceive') {
+                if (ev.status === 'ok') {
+                    addLog('\uD83D\uDCF1', ev.elements + ' elements', '');
+                } else if (ev.status === 'failed') {
+                    addLog('\u274C', ev.error, 'er');
+                }
+            }
+            else if (t === 'think') {
+                addLog('\uD83E\uDDE0', 'Thinking...', '');
+                tgtNrg = 0.25;
+            }
+            else if (t === 'act') {
+                if (ev.success) {
+                    tgtNrg = 0.4;
+                } else {
+                    tgtNrg = 0.05;
+                }
+                setTimeout(function () { tgtNrg = 0.08; }, 500);
+                var cls = 'er';
+                if (ev.success) cls = 'ok';
+                if (ev.action === 'research' && ev.success) cls = 'res';
+                var icon = ev.success ? '\u2705' : '\u274C';
+                addLog(icon, ev.desc, cls);
+            }
+            else if (t === 'verify') {
+                if (ev.status === 'done') {
+                    var vOk = ev.ok;
+                    var vIcon = vOk ? '\uD83D\uDD0D' : '\u26A0\uFE0F';
+                    var vMsg = ev.obs || (vOk ? 'Verified' : 'Mismatch');
+                    var vCls = vOk ? '' : 'wn';
+                    addLog(vIcon, vMsg, vCls);
+                }
+            }
+            else if (t === 'evaluate') {
+                if (ev.status === 'done') {
+                    var conf = ev.confidence || 0;
+                    var track = ev.on_track;
+                    if (track && conf >= 7) {
+                        addLog('\uD83D\uDFE2', '[' + conf + '/10] ' + ev.assessment, 'ev');
+                    } else if (track && conf >= 5) {
+                        addLog('\uD83D\uDFE1', '[' + conf + '/10] ' + ev.assessment, 'ev');
+                        if (ev.suggestion) addLog('\u21AA', ev.suggestion, 'ev');
+                    } else {
+                        addLog('\uD83D\uDD34', '[' + conf + '/10] OFF TRACK: ' + ev.assessment, 'ev-bad');
+                        if (ev.suggestion) addLog('\u21AA', 'Try: ' + ev.suggestion, 'ev-bad');
+                    }
+                } else if (ev.status === 'checking') {
+                    addLog('\uD83D\uDD0E', 'Evaluating progress...', '');
+                }
+            }
+            else if (t === 'loop') {
+                addLog('\uD83D\uDD04', 'Loop \u2014 retrying', 'wn');
+            }
+            else if (t === 'done') {
+                addLog('\u2705', ev.summary, 'ok');
+                if (!isQueue) {
+                    showBanner('\u2705 ' + ev.summary, 'ok');
+                    finishRun();
+                }
+            }
+            else if (t === 'error') {
+                addLog('\uD83D\uDED1', ev.message, 'er');
+                if (!isQueue) {
+                    showBanner('\uD83D\uDED1 ' + ev.message, 'er');
+                    finishRun();
+                }
+            }
+            else if (t === 'skipped') {
+                addLog('\u23ED', ev.message, 'wn');
+                if (currentJobIdx >= 0) {
+                    setQueueSkipped(currentJobIdx);
+                }
+            }
+            else if (t === 'stopped') {
+                addLog('\u23F9', ev.message, 'wn');
+                finishRun();
+            }
+        }
+
+
+        /* ========== QUEUE ========== */
+        function buildQueue(jobList) {
+            jobs = jobList;
+            var qEl = document.getElementById('queue');
+            qEl.innerHTML = '';
+            if (jobList.length <= 1) {
+                qEl.classList.remove('show');
+                return;
+            }
+            qEl.classList.add('show');
+            for (var i = 0; i < jobList.length; i++) {
+                var row = document.createElement('div');
+                row.className = 'queue-row';
+
+                var dot = document.createElement('div');
+                dot.className = 'queue-dot';
+                dot.id = 'qd' + i;
+
+                var lbl = document.createElement('span');
+                lbl.className = 'queue-label';
+                lbl.id = 'ql' + i;
+                lbl.textContent = (i + 1) + '. ' + jobList[i];
+
+                var btn = document.createElement('button');
+                btn.className = 'queue-stop';
+                btn.id = 'qs' + i;
+                btn.textContent = '\u23F9';
+                btn.type = 'button';
+                btn.onclick = doSkip;
+
+                row.appendChild(dot);
+                row.appendChild(lbl);
+                row.appendChild(btn);
+                qEl.appendChild(row);
+            }
+        }
+
+        function setQueueActive(idx) {
+            for (var i = 0; i < jobs.length; i++) {
+                var b = document.getElementById('qs' + i);
+                if (b) b.classList.remove('show');
+            }
+            var d = document.getElementById('qd' + idx);
+            var l = document.getElementById('ql' + idx);
+            var s = document.getElementById('qs' + idx);
+            if (d) d.className = 'queue-dot active';
+            if (l) l.className = 'queue-label active';
+            if (s) s.classList.add('show');
+        }
+
+        function setQueueDone(idx) {
+            var d = document.getElementById('qd' + idx);
+            var l = document.getElementById('ql' + idx);
+            var s = document.getElementById('qs' + idx);
+            if (d) d.className = 'queue-dot done';
+            if (l) l.className = 'queue-label done';
+            if (s) s.classList.remove('show');
+        }
+
+        function setQueueSkipped(idx) {
+            var d = document.getElementById('qd' + idx);
+            var l = document.getElementById('ql' + idx);
+            var s = document.getElementById('qs' + idx);
+            if (d) d.className = 'queue-dot skipped';
+            if (l) l.className = 'queue-label skipped';
+            if (s) s.classList.remove('show');
+        }
+
+
+        /* ========== HELPERS ========== */
+        function resetUI() {
+            document.getElementById('lbody').innerHTML = '';
+            document.getElementById('logs').classList.remove('show');
+            document.getElementById('ban').className = 'ban';
+            document.getElementById('stopBtn').classList.remove('show');
+            document.getElementById('bar').className = 'lbar';
+            document.getElementById('barTxt').textContent = 'Running';
+            var qEl = document.getElementById('queue');
+            qEl.classList.remove('show');
+            qEl.innerHTML = '';
+            jobs = [];
+            isQueue = false;
+            currentJobIdx = -1;
+        }
+
+        function setStatus(msg, type) {
+            var el = document.getElementById('st');
+            el.textContent = msg;
+            el.className = 'st';
+            if (type === 'lit') el.classList.add('st-lit');
+            if (type === 'err') el.classList.add('st-err');
+        }
+
+        function showBanner(msg, type) {
+            var el = document.getElementById('ban');
+            el.textContent = msg;
+            el.className = 'ban';
+            if (type === 'ok') el.classList.add('ban-ok');
+            if (type === 'er') el.classList.add('ban-er');
+        }
+
+        function finishRun() {
+            tgtNrg = 0;
+            document.getElementById('stopBtn').classList.remove('show');
+            document.getElementById('bar').className = 'lbar off';
+            document.getElementById('barTxt').textContent = 'Finished';
+            if (evtSrc) {
+                evtSrc.close();
+                evtSrc = null;
+            }
+        }
+
+        function addLog(icon, msg, cls, isSep) {
+            var row = document.createElement('div');
+            row.className = 'lr';
+            if (isSep) row.className += ' lr-sep';
+
+            var iconEl = document.createElement('span');
+            iconEl.className = 'i';
+            iconEl.textContent = icon;
+
+            var msgEl = document.createElement('span');
+            msgEl.className = 'm';
+            if (cls === 'ok') msgEl.className += ' m-ok';
+            else if (cls === 'er') msgEl.className += ' m-er';
+            else if (cls === 'wn') msgEl.className += ' m-wn';
+            else if (cls === 'hi') msgEl.className += ' m-hi';
+            else if (cls === 'res') msgEl.className += ' m-res';
+            else if (cls === 'ev') msgEl.className += ' m-ev';
+            else if (cls === 'ev-bad') msgEl.className += ' m-ev-bad';
+            msgEl.textContent = msg;
+
+            row.appendChild(iconEl);
+            row.appendChild(msgEl);
+
+            var body = document.getElementById('lbody');
+            body.appendChild(row);
+            body.scrollTop = body.scrollHeight;
+        }
+    </script>
+</body>
+
+</html>
