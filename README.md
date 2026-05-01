@@ -10,7 +10,7 @@
 
 <p align="center">
   <em>Speak or type a goal → OmniClaw reasons, plans, and executes it on your phone — hands-free.</em>
-</p>
+</p> 
 
 <p align="center">
   <a href="#features"><img src="https://img.shields.io/badge/Features-9_Tools-blue?style=flat-square" alt="Tools"/></a>
