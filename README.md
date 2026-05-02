@@ -5,7 +5,7 @@
 <h1 align="center">OmniClaw</h1>
  
 <p align="center">
-  <strong>An Autonomous General-Intelligence Agent That Controls Your Android Phone</strong>
+  <strong>An Autonomous General-Intelligence Agent That Controls Your Android Phone</strong> 
 </p>
 
 <p align="center">
