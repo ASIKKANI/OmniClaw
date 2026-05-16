@@ -6,7 +6,7 @@ Serves the web UI and streams orchestrator events via SSE.
 Endpoints:
   GET  /            — Serve index.html
   GET  /api/run     — Start orchestrator for a goal (SSE stream)
-  POST /api/skip    — Stop current task
+  POST /api/skip    — Stop current task  
   POST /api/stop    — Stop everything
 """
 
